@@ -65,7 +65,7 @@ class User extends Model
  - Multiple database connections are supported, but you
  need to consider that if you open a transaction inside a different
  connection than your target model, your target model's commit callbacks will be
- fire immediately.
+ fired immediately.
  
 
 ## Why do we need **committed** event in Eloquent?
