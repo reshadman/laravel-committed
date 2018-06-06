@@ -41,7 +41,9 @@ class User extends Model
     protected static function boot()
     {
         static::committed(function (User $user) {
+            
             \Log::info($user->getKey()); 
+        
         });
         
         static::committedCreation(function ($user) {});
