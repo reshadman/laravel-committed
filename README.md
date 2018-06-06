@@ -1,6 +1,5 @@
 # Laravel Committed
-![Build Status](http://img.shields.io/travis/reshadman/laravel-com/master.png?style=flat-square)
-
+![Build Status](https://travis-ci.org/reshadman/laravel-committed.svg?branch=master)
 Adds **committed** event to Eloquent default event callbacks (created, creating, saved, saving...).
 
 ## Installation 
