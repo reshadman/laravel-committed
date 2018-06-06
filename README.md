@@ -60,7 +60,10 @@ class User extends Model
 
 ## Notices
 
- - Nested transactions are supported.
+ - Nested transactions are supported. 
+ Registered callbacks are deleted just after a nested transaction 
+ rollback, and nested transaction commits happen only when 
+ the top parent transaction is committed.
  - Commit callbacks will not be fired on rollback or exceptions.
  - Callbacks are immediately fired if their model's connection
  is not inside an active transaction.
