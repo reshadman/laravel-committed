@@ -29,22 +29,34 @@ class TransactionEventsSubscriber
      */
     public function onTransactionCommit(TransactionCommitted $transaction)
     {
-        $identifier = static::extractIdentifierFromConnectionAfter($transaction->connection);
+        if ($transaction->connection->transactionLevel() > 0) {
+            return;
+        }
 
-        if (isset(static::$connectionCallbackTree[$identifier])) {
+        list($connectionName,) = static::extractIdentifierFromConnectionAfter($transaction->connection);
+
+        if (isset(static::$connectionCallbackTree[$connectionName])) {
 
 
-            foreach (static::$connectionCallbackTree[$identifier] as $index => $callback) {
+            foreach (static::$connectionCallbackTree[$connectionName] as $tLevel => $callbacks) {
 
-                unset(static::$connectionCallbackTree[$identifier][$index]);
+                foreach ($callbacks as $index => $callback) {
 
-                $callback($transaction);
+                    unset(static::$connectionCallbackTree[$connectionName][$tLevel][$index]);
+
+                    $callback($transaction);
+
+                }
+
+                if (empty(static::$connectionCallbackTree[$connectionName][$tLevel])) {
+                    unset(static::$connectionCallbackTree[$connectionName][$tLevel]);
+                }
 
             }
 
             // Don't blow up memory in an environment with lots of connections (like multi tenant apps.).
-            if (empty(static::$connectionCallbackTree[$identifier])) {
-                unset(static::$connectionCallbackTree[$identifier]);
+            if (empty(static::$connectionCallbackTree[$connectionName])) {
+                unset(static::$connectionCallbackTree[$connectionName]);
             }
 
         }
@@ -57,11 +69,12 @@ class TransactionEventsSubscriber
      */
     public function onTransactionRollback(TransactionRolledBack $transaction)
     {
-        $identifier = static::extractIdentifierFromConnectionAfter($transaction->connection);
+        list($connectionName, $tLevel) = static::extractIdentifierFromConnectionAfter($transaction->connection);
 
-        if (isset(static::$connectionCallbackTree[$identifier])) {
 
-            unset(static::$connectionCallbackTree[$identifier]);
+        if (isset(static::$connectionCallbackTree[$connectionName][$tLevel])) {
+
+            unset(static::$connectionCallbackTree[$connectionName][$tLevel]);
 
         }
     }
@@ -90,32 +103,33 @@ class TransactionEventsSubscriber
      */
     public static function addModelCallback($model, $callback)
     {
-
-        $connectionIdentifier = static::extractIdentifierFromConnectionDuringRun($model->getConnection());
-        static::$connectionCallbackTree[$connectionIdentifier][] = $callback;
+        list($connectionName, $tLevel) = static::extractIdentifierFromConnectionDuringRun($model->getConnection());
+        static::$connectionCallbackTree[$connectionName][$tLevel][] = $callback;
     }
 
 
     /**
      * @param Connection $connection
-     * @return string
+     * @return array
      */
     protected static function extractIdentifierFromConnectionDuringRun($connection)
     {
-       return $connection->getName() . '@' . (string)$connection->transactionLevel();
+        return [$connection->getName(), $connection->transactionLevel()];
     }
 
     /**
      * @param Connection $connection
-     * @return string
+     * @return array
      */
     protected static function extractIdentifierFromConnectionAfter($connection)
     {
-        return $connection->getName() . '@' . (string)($connection->transactionLevel() + 1);
+        return [$connection->getName(), $connection->transactionLevel() + 1];
     }
 
-    public static function getCallbackTree()
+    public static function getCallbackTree($connectionName = null)
     {
-        return static::$connectionCallbackTree;
+        return $connectionName === null
+            ? static::$connectionCallbackTree
+            : array_get(static::$connectionCallbackTree, $connectionName, []);
     }
 }

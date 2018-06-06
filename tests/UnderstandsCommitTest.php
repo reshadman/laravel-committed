@@ -32,7 +32,7 @@ class UnderstandsCommitTest extends TestCase
             function () use (&$user, $data) {
                 $user = UserStub::create($data);
 
-                $this->assertEquals(count(TransactionEventsSubscriber::getCallbackTree()), 1);
+                $this->assertEquals(1, count(TransactionEventsSubscriber::getCallbackTree('sqlite')));
 
                 \DB::beginTransaction();
 
@@ -40,9 +40,11 @@ class UnderstandsCommitTest extends TestCase
 
                 $this->assertEquals($nestedUser->committedMessage, 'Nothing.');
 
-                $this->assertEquals(count(TransactionEventsSubscriber::getCallbackTree()), 2);
+                $this->assertEquals(2, count(TransactionEventsSubscriber::getCallbackTree('sqlite')));
 
                 \DB::rollback();
+
+                $this->assertEquals(1, count(TransactionEventsSubscriber::getCallbackTree('sqlite')));
 
                 $this->assertEquals($nestedUser->committedMessage, 'Nothing.');
 
@@ -52,11 +54,11 @@ class UnderstandsCommitTest extends TestCase
 
         $this->assertEquals($user->committedMessage, 'I am committed.');
 
-        $this->assertEquals(count(TransactionEventsSubscriber::getCallbackTree()), 0);
+        $this->assertEquals(0, count(TransactionEventsSubscriber::getCallbackTree('sqlite')));
 
         $user2 = UserStub::create($data);
 
-        $this->assertEquals(count(TransactionEventsSubscriber::getCallbackTree()), 0);
+        $this->assertEquals(0, count(TransactionEventsSubscriber::getCallbackTree('sqlite')));
 
         $this->assertEquals($user2->committedMessage, 'I am committed.');
     }

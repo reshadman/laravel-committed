@@ -10,17 +10,11 @@ use Illuminate\Database\Eloquent\Model;
  */
 trait UnderstandsCommit
 {
-    /**
-     * New model events which behave upon
-     * the commit event of the model's connection.
-     *
-     * @var array
-     */
-    protected static $mergingObservableEvents = [
-        'committed',
-        'committedCreation',
-        'committedUpdate',
-        'committedDelete',
+    protected static $registeredCommitActions = [
+        'committed' => 0,
+        'committedCreation' => 0,
+        'committedUpdate' => 0,
+        'committedDelete' => 0
     ];
 
     /**
@@ -32,7 +26,7 @@ trait UnderstandsCommit
      */
     public function getObservableEvents()
     {
-        return array_merge(parent::getObservableEvents(), static::$mergingObservableEvents);
+        return array_merge(parent::getObservableEvents(), array_keys(static::$registeredCommitActions));
     }
 
     /**
@@ -62,6 +56,7 @@ trait UnderstandsCommit
      */
     protected static function committed($callback)
     {
+        static::$registeredCommitActions['committed']++;
         parent::registerModelEvent('committed', $callback);
     }
 
@@ -72,7 +67,8 @@ trait UnderstandsCommit
      */
     protected static function committedCreation($callback)
     {
-        parent::registerModelEvent('committed_creation', $callback);
+        static::$registeredCommitActions['committedCreation']++;
+        parent::registerModelEvent('committedCreation', $callback);
     }
 
     /**
@@ -82,7 +78,8 @@ trait UnderstandsCommit
      */
     protected static function committedUpdate($callback)
     {
-        parent::registerModelEvent('committed_update', $callback);
+        static::$registeredCommitActions['committedUpdate']++;
+        parent::registerModelEvent('committedUpdate', $callback);
     }
 
     /**
@@ -92,7 +89,8 @@ trait UnderstandsCommit
      */
     protected static function committedDelete($callback)
     {
-        parent::registerModelEvent('committed_delete', $callback);
+        static::$registeredCommitActions['committedDelete']++;
+        parent::registerModelEvent('committedDelete', $callback);
     }
 
     /**
@@ -106,19 +104,24 @@ trait UnderstandsCommit
      */
     protected function markNativeEventForCommitAction($commitAction)
     {
-        if ($this->getConnection()->transactionLevel() <= 0) {
+        if (static::$registeredCommitActions[$commitAction] > 0) {
 
-            $this->fireModelEvent($commitAction);
-
-        } else {
-
-            TransactionEventsSubscriber::addModelCallback($this, function () use ($commitAction) {
+            if ($this->getConnection()->transactionLevel() <= 0) {
 
                 $this->fireModelEvent($commitAction);
 
-            });
+            } else {
+
+                TransactionEventsSubscriber::addModelCallback($this, function () use ($commitAction) {
+
+                    $this->fireModelEvent($commitAction);
+
+                });
+
+            }
 
         }
+
 
         return $this;
     }
