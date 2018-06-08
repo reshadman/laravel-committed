@@ -104,25 +104,19 @@ trait UnderstandsCommit
      */
     protected function markNativeEventForCommitAction($commitAction)
     {
-        if (static::$registeredCommitActions[$commitAction] > 0) {
-
-            if ($this->getConnection()->transactionLevel() <= 0) {
-
-                $this->fireModelEvent($commitAction);
-
-            } else {
-
-                TransactionEventsSubscriber::addModelCallback($this, function () use ($commitAction) {
-
-                    $this->fireModelEvent($commitAction);
-
-                });
-
-            }
-
+        if (static::$registeredCommitActions[$commitAction] <= 0) {
+              return $this;
+        }
+        
+        if ($this->getConnection()->transactionLevel() <= 0) {
+            $this->fireModelEvent($commitAction);
+            return $this;
         }
 
-
+        TransactionEventsSubscriber::addModelCallback($this, function () use ($commitAction) {
+            $this->fireModelEvent($commitAction);
+        });
+        
         return $this;
     }
 
