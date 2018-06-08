@@ -29,5 +29,12 @@
         "psr-4": {
             "Reshadman\\Committed\\Tests\\": "tests"
         }
-    }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Reshadman\\Committed\\CommittedServiceProvider"
+            ]
+        }
+    },
 }
