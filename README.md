@@ -12,7 +12,7 @@ composer require reshadman/laravel-committed
 
 ## Usage
 
-Add the following service provider to your `app.php` config
+The service provider is registered automatically with discovery or you can Add the following service provider to your `app.php` config
 file:
 
 ```php
