@@ -1,3 +1,7 @@
+# Deprecation Notice
+This project is deprected and abondoned. Laravel now has some nice features fore defininf event subscribers that are called upon commit. The message queue jobs can also be pushed only if committed. So there is no need for another approach in community but if you are interested the concept is still simple and usable even though 
+overridining too much behavior of eloquent can cause trouble. Just use the simple implementation provided by the core team.  
+
 # Laravel Committed
 ![Build Status](https://travis-ci.org/reshadman/laravel-committed.svg?branch=master)
 
